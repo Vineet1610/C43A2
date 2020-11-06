@@ -1,7 +1,6 @@
 import java.sql.*;
 
 public class Assignment2 {
-  
   public static void main(String[] args) throws Exception {
     Assignment2 a2 = new Assignment2();
 
@@ -19,59 +18,62 @@ public class Assignment2 {
     
     // A connection to the database  
     Connection connection;
-  
+
     // Statement to run queries
     Statement sql;
-  
+
     // Prepared Statement
     PreparedStatement ps;
     // Second Prepared Statment
     PreparedStatement ps2;
-  
+
     // Resultset for the query
     ResultSet rs;
     // Second Resultset
     ResultSet rs2;
-  
-    //CONSTRUCTOR
-    Assignment2(){
-      try {
-        Class.forName("org.postgresql.Driver");
-      } catch (ClassNotFoundException e) {
-          e.printStackTrace();
-      }
-    }
-  
-    //Using the input parameters, establish a connection to be used for this session. Returns true if connection is sucessful
-    public boolean connectDB(String URL, String username, String password){
-      try {
-        if (connection != null && !connection.isClosed()) {
-            if (!disconnectDB()) {
-                return false;
-            }
-        }
 
-        connection = DriverManager.getConnection(URL, username, password);
-        return true;
-      } catch (Exception e) {
-          return false;
-      }
+    // CONSTRUCTOR
+    Assignment2() {
+        try {
+            Class.forName("org.postgresql.Driver");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Using the input parameters, establish a connection to be used for this
+    // session. Returns true if connection is sucessful
+    public boolean connectDB(String URL, String username, String password) {
+        try {
+            if (connection != null && !connection.isClosed()) {
+                if (!disconnectDB()) {
+                    return false;
+                }
+            }
+
+            connection = DriverManager.getConnection(URL, username, password);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
   
     // Closes the connection. Returns true if closure was successful
-    public boolean disconnectDB(){
-      try {
-        if (connection != null && !connection.isClosed()) {
-            connection.close();
-            return true;
-        } else {
+    public boolean disconnectDB() {
+        try {
+            if (connection != null && !(connection.isClosed())) {
+                connection.close();
+                return true;
+            } else {
+                return false;
+            }
+        } catch (SQLException e) {
+            return false;
+        } catch (Exception e1) {
             return false;
         }
-    } catch (Exception e) {
-        return false;
-    }   
     }
-    
+
     public boolean insertPlayer(int pid, String pname, int globalRank, int cid) {
       try {
         ps = connection.prepareStatement("INSERT INTO A2.player VALUES (?, ?, ?, ?);");
@@ -97,13 +99,49 @@ public class Assignment2 {
           return false;
       }
     }
-  
+
     public int getChampions(int pid) {
-	      return 0;  
+        try {
+            ps = connection.prepareStatement("SELECT COUNT(*) FROM A2.champion WHERE pid=?;");
+
+            ps.setInt(1, pid);
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+                int numberOfChampionships = rs.getInt(1);
+                try {
+                    ps.close();
+                    rs.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    return 0;
+                }
+                return numberOfChampionships;
+            } else {
+                try {
+                    ps.close();
+                    rs.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    return 0;
+                }
+                return 0;
+            }
+        } catch (SQLException e) {
+            try {
+                ps.close();
+                rs.close();
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+                return 0;
+            }
+            e.printStackTrace();
+            return 0;
+        }
     }
-   
-    public String getCourtInfo(int courtid){
-      try {
+
+    public String getCourtInfo(int courtid) {
+        try {
         ps = connection.prepareStatement("SELECT * FROM A2.court WHERE courtid=?;");
 
         ps.setInt(1, courtid);
@@ -148,8 +186,40 @@ public class Assignment2 {
       }
     }
 
-    public boolean chgRecord(int pid, int year, int wins, int losses){
-        return false;
+    public boolean chgRecord(int pid, int year, int wins, int losses) {
+        try {
+            ps = connection.prepareStatement("UPDATE A2.record SET wins=?, losses=? WHERE pid=? AND year=?;");
+
+            ps.setInt(1, wins);
+            ps.setInt(2, losses);
+            ps.setInt(3, pid);
+            ps.setInt(4, year);
+
+            int updateSuccess = ps.executeUpdate();
+            if (updateSuccess > 0) {
+                try {
+                    ps.close();
+                } catch (Exception e) {
+                    return false;
+                }
+                return true;
+            } else {
+                try {
+                    ps.close();
+                } catch (Exception e) {
+                    return false;
+                }
+                return false;
+            }
+        } catch (SQLException e) {
+            try {
+                ps.close();
+            } catch (Exception e1) {
+                return false;
+            }
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean deleteMatcBetween(int p1id, int p2id){
@@ -178,9 +248,47 @@ public class Assignment2 {
           return false;
       }
     }
-  
-    public String listPlayerRanking(){
-	      return "";
+
+    public String listPlayerRanking() {
+        try {
+            ps = connection.prepareStatement("SELECT pname, globalrank FROM A2.player ORDER BY globalrank [ASC];");
+
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+                int rank = rs.getInt(2);
+                String name = rs.getString(1);
+
+                String rankings = String.format("%s:%d\n", name, rank);
+                try {
+                    ps.close();
+                    rs.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return "";
+                }
+                return rankings;
+            } else {
+                try {
+                    ps.close();
+                    rs.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return "";
+                }
+                return "";
+            }
+        } catch (SQLException e) {
+            try {
+                ps.close();
+                rs.close();
+            } catch (Exception e1) {
+                e1.printStackTrace();
+                return "";
+            }
+            e.printStackTrace();
+            return "";
+        }
     }
   
     public int findTriCircle(){
@@ -207,8 +315,34 @@ public class Assignment2 {
             return 0;
         }
     }
-    
-    public boolean updateDB(){
-	      return false;    
+
+    public boolean updateDB() {
+        try {
+            ps = connection.prepareStatement("DROP TABLE IF EXISTS championPlayers CASCADE;");
+            ps.execute();
+            ps.close();
+
+            ps = connection.prepareStatement(
+                    "CREATE TABLE championPlayers(" + "pid INTEGER, pname VARCHAR, nchampions INTEGER);");
+            ps.execute();
+            ps.close();
+
+            ps = connection.prepareStatement("INSERT INTO A2.championPlayers "
+                    + "(SELECT player.pid player.pname count(champion.tid) as nchampions "
+                    + "FROM A2.player player JOIN A2.champion champion on player.pid = champion.pid "
+                    + "GROUP BY player.pid);");
+            ps.execute();
+            ps.close();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            try {
+                ps.close();
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+                return false;
+            }
+            return false;
+        }    
     }  
 }
