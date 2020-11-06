@@ -117,7 +117,7 @@ public class Assignment2 {
             }
             e.printStackTrace();
             return 0;
-        } 
+        }
     }
 
     public String getCourtInfo(int courtid) {
@@ -176,8 +176,7 @@ public class Assignment2 {
                     return false;
                 }
                 return true;
-            }
-            else {
+            } else {
                 try {
                     ps.close();
                 } catch (Exception e) {
@@ -225,7 +224,7 @@ public class Assignment2 {
 
             rs = ps.executeQuery();
 
-            if(rs.next()) {
+            if (rs.next()) {
                 int rank = rs.getInt(2);
                 String name = rs.getString(1);
 
@@ -238,8 +237,7 @@ public class Assignment2 {
                     return "";
                 }
                 return rankings;
-            }
-            else {
+            } else {
                 try {
                     ps.close();
                     rs.close();
@@ -259,14 +257,40 @@ public class Assignment2 {
             }
             e.printStackTrace();
             return "";
-        } 
+        }
     }
-  
-    public int findTriCircle(){
+
+    public int findTriCircle() {
         return 0;
     }
-    
-    public boolean updateDB(){
-	      return false;    
+
+    public boolean updateDB() {
+        try {
+            ps = connection.prepareStatement("DROP TABLE IF EXISTS championPlayers CASCADE;");
+            ps.execute();
+            ps.close();
+
+            ps = connection.prepareStatement(
+                    "CREATE TABLE championPlayers(" + "pid INTEGER, pname VARCHAR, nchampions INTEGER);");
+            ps.execute();
+            ps.close();
+
+            ps = connection.prepareStatement("INSERT INTO A2.championPlayers "
+                    + "(SELECT player.pid player.pname count(champion.tid) as nchampions "
+                    + "FROM A2.player player JOIN A2.champion champion on player.pid = champion.pid "
+                    + "GROUP BY player.pid);");
+            ps.execute();
+            ps.close();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            try {
+                ps.close();
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+                return false;
+            }
+            return false;
+        }    
     }  
 }
