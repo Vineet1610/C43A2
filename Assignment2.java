@@ -10,10 +10,12 @@ public class Assignment2 {
   
     // Prepared Statement
     PreparedStatement ps;
+    // Second Prepared Statment
     PreparedStatement ps2;
   
     // Resultset for the query
     ResultSet rs;
+    // Second Resultset
     ResultSet rs2;
   
     //CONSTRUCTOR
@@ -41,7 +43,7 @@ public class Assignment2 {
       }
     }
   
-    //Closes the connection. Returns true if closure was successful
+    // Closes the connection. Returns true if closure was successful
     public boolean disconnectDB(){
         return false;    
     }
@@ -55,16 +57,20 @@ public class Assignment2 {
         ps.setInt(3, globalRank);
         ps.setInt(4, cid);
 
-        int count = ps.executeUpdate();
-        return count == 1;
+        int inserted = ps.executeUpdate();
+        try {
+            ps.close();
+        } catch (Exception e) {
+            return false;
+        }
+        return inserted == 1;
       } catch (Exception e) {
-          return false;
-      } finally {
           try {
               ps.close();
           } catch (Exception e) {
               return false;
           }
+          return false;
       }
     }
   
@@ -95,19 +101,26 @@ public class Assignment2 {
                 return "";
             }
         } else {
+            try {
+                ps.close();
+                ps2.close();
+                rs.close();
+                rs2.close();
+            } catch (Exception e) {
+                return "";
+            }
             return "";
         }
       } catch (Exception e) {
-          return "";
-      } finally {
           try {
               ps.close();
-              rs.close();
               ps2.close();
+              rs.close();
               rs2.close();
           } catch (Exception e) {
               return "";
           }
+          return "";
       }
     }
 
@@ -125,16 +138,21 @@ public class Assignment2 {
         ps.setInt(4, p1id);
 
         int count = ps.executeUpdate();
+        try {
+            ps.close();
+        } catch (Exception e) {
+            return false;
+        }
+
         return count > 0;
       } catch (Exception e) {
-          return false;
-      } finally {
           try {
               ps.close();
           } catch (Exception e) {
               return false;
           }
-      }       
+          return false;
+      }
     }
   
     public String listPlayerRanking(){
@@ -142,7 +160,28 @@ public class Assignment2 {
     }
   
     public int findTriCircle(){
-        return 0;
+        try {
+            ps = connection.prepareStatement("SELECT COUNT(*) FROM (SELECT DISTINCT e1.winid, e2.winid, e3.winid "
+                    + "FROM A2.event e1, A2.event e2, A2.event e3 WHERE e1.winid < e2.winid AND e2.winid < e3.winid "
+                    + "AND e1.winid = e3.lossid AND e3.winid = e2.lossid AND e2.winid = e1.lossid) scope;");
+            rs = ps.executeQuery();
+
+            try {
+                ps.close();
+                rs.close();
+            } catch (Exception e) {
+                return 0;
+            }
+            return rs.next() ? rs.getInt(1) : 0;
+        } catch (Exception e) {
+            try {
+                ps.close();
+                rs.close();
+            } catch (Exception e) {
+                return 0;
+            }
+            return 0;
+        }
     }
     
     public boolean updateDB(){
