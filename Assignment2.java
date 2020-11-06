@@ -1,6 +1,21 @@
 import java.sql.*;
 
 public class Assignment2 {
+  
+  public static void main(String[] args) throws Exception {
+    Assignment2 a2 = new Assignment2();
+
+    System.out.printf("%b\t%s\n", a2.connectDB(args[0], args[1], args[2]), "Connecting ...");
+    System.out.printf("%b\t%s\n", !a2.connection.isClosed(), "Connection open!");
+    
+    System.out.printf("%b\t%s\n", a2.insertPlayer(8, "Raj Patel", 8, 3), "Insert new player");
+    System.out.printf("%b\t%s\n", !a2.insertPlayer(8, "Raj Patel", 8, 3), "Insert same player");
+    System.out.printf("%b\t%s\n", !a2.insertPlayer(8, "Vineet Desai", 9, 3), "Insert with duplicate playerID");
+    System.out.printf("%b\t%s\n", !a2.insertPlayer(9, "Vineet Desai", 9, 10), "Insert with invalid invalid countryID");
+    
+    System.out.printf("%b\t%s\n", a2.disconnectDB(), "Closing ...");
+    System.out.printf("%b\t%s\n", a2.connection, "Connection closed!");
+  }
     
     // A connection to the database  
     Connection connection;
@@ -45,7 +60,16 @@ public class Assignment2 {
   
     // Closes the connection. Returns true if closure was successful
     public boolean disconnectDB(){
-        return false;    
+      try {
+        if (connection != null && !connection.isClosed()) {
+            connection.close();
+            return true;
+        } else {
+            return false;
+        }
+    } catch (Exception e) {
+        return false;
+    }   
     }
     
     public boolean insertPlayer(int pid, String pname, int globalRank, int cid) {
@@ -67,7 +91,7 @@ public class Assignment2 {
       } catch (Exception e) {
           try {
               ps.close();
-          } catch (Exception e) {
+          } catch (Exception e2) {
               return false;
           }
           return false;
@@ -117,7 +141,7 @@ public class Assignment2 {
               ps2.close();
               rs.close();
               rs2.close();
-          } catch (Exception e) {
+          } catch (Exception e2) {
               return "";
           }
           return "";
@@ -148,7 +172,7 @@ public class Assignment2 {
       } catch (Exception e) {
           try {
               ps.close();
-          } catch (Exception e) {
+          } catch (Exception e2) {
               return false;
           }
           return false;
@@ -177,7 +201,7 @@ public class Assignment2 {
             try {
                 ps.close();
                 rs.close();
-            } catch (Exception e) {
+            } catch (Exception e2) {
                 return 0;
             }
             return 0;
