@@ -18,7 +18,7 @@ order by pname asc
 
 --Query 2
 INSERT INTO query2
-(select tname, sum(capacity)
+(select tname, sum(capacity) as totalCapacity
 from tournament join court on tournament.tid = court.tid
 group by tournament.tid
 having sum(capacity) = (select max(seats) from
@@ -32,13 +32,13 @@ CREATE VIEW allmatches AS
 (
 select player1 as player1id, pid as player2id, pname as player2name, globalrank as player2rank
 from (
-	(select winid as player1id, lossid as player2
+	(select winid as player1, lossid as player2
 	from event) 
 	UNION
 	(select lossid, winid
 	from event)
-) matches 
-left join player on pid = player2id
+) allmatches 
+left join player on pid = player2
 );
 --Query 3
 INSERT INTO query3
@@ -71,7 +71,7 @@ order by pname asc);
 --Query 5
 INSERT INTO query5
 (
-select player.pid, pname, (sum(wins)/count(distinct year)) as avgwins
+select player.pid, pname, (sum(wins)/cast(count(distinct year) as real)) as avgwins
 from player join record on player.pid = record.pid 
 where year = 2011 OR year = 2012 OR year = 2013 OR year = 2014
 group by player.pid, pname
