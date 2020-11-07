@@ -1,42 +1,6 @@
 import java.sql.*;
 
 public class Assignment2 {
-  public static void main(String[] args) throws Exception {
-    Assignment2 a2 = new Assignment2();
-
-    System.out.printf("%b\t%s\n", a2.connectDB(args[0], args[1], args[2]), "Connecting ...");
-    System.out.printf("%b\t%s\n", !a2.connection.isClosed(), "Connection open!");
-    
-    System.out.printf("%b\t%s\n", a2.insertPlayer(8, "Raj Patel", 8, 3), "Insert new player");
-    System.out.printf("%b\t%s\n", !a2.insertPlayer(8, "Raj Patel", 8, 3), "Insert same player");
-    System.out.printf("%b\t%s\n", !a2.insertPlayer(8, "Vineet Desai", 9, 3), "Insert with duplicate playerID");
-    System.out.printf("%b\t%s\n", !a2.insertPlayer(9, "Vineet Desai", 9, 10), "Insert with invalid invalid countryID");
-    
-    System.out.printf("%b\t%s\n", a2.getChampions(1) == 6, "Champion status valid player");
-    System.out.printf("%b\t%s\n", a2.getChampions(100) == 0, "Champion status invalid player");
-
-    System.out.printf("%b\t%s\n", a2.getCourtInfo(10).equals("10:Court10:500:Big Tournament"), "Court status valid court");
-    System.out.printf("%b\t%s\n", a2.getCourtInfo(100).equals(""), "Court status invalid court");
-
-    System.out.printf("%b\t%s\n", a2.chgRecord(1, 2011, 25, 25), "Change record valid player");
-    System.out.printf("%b\t%s\n", !a2.chgRecord(100, 2011, 25, 25), "Change record invalid player");
-    System.out.printf("%b\t%s\n", !a2.chgRecord(1, 2015, 25, 25), "Change record invalid year");
-
-    System.out.printf("%b\t%s\n", a2.deleteMatcBetween(1, 5), "Delete matches valid user");
-    System.out.printf("%b\t%s\n", a2.deleteMatcBetween(6, 1), "Delete matches valid user reverse");
-    System.out.printf("%b\t%s\n", !a2.deleteMatcBetween(1, 6), "Delete matches invalid users");
-
-    int circles = a2.findTriCircle();
-    System.out.printf("%b\t%s\n", circles == 2, circles + " = 2 circles (1, 2, 3) & (2, 3, 4)");
-
-    System.out.printf("%b\t%s\n", a2.updateDB(), "Update database");
-
-    System.out.println("== Player Rankings:\n" + a2.listPlayerRanking());
-    
-    System.out.printf("%b\t%s\n", a2.disconnectDB(), "Closing ...");
-    System.out.printf("%b\t%s\n", a2.connection, "Connection closed!");
-  }
-    
     // A connection to the database  
     Connection connection;
 
@@ -172,15 +136,16 @@ public class Assignment2 {
             String courtName = rs.getString("courtname");
 
             ps2 = connection.prepareStatement("SELECT * FROM A2.tournament WHERE tid=?;");
+            
             ps2.setInt(1, tid);
             rs2 = ps2.executeQuery();
 
             if (rs2.next()) {
                 String tname = rs2.getString("tname");
-                return String.format("%d:%s:%d:%s", courtid, courtName, capacity, tname);
-            } else {
-                return "";
+                return (courtid + ":" + courtName + ":" + capacity + ":" + tname);
             }
+            
+            return "";
         } else {
             try {
                 ps.close();
@@ -221,6 +186,7 @@ public class Assignment2 {
                 } catch (Exception e) {
                     return false;
                 }
+                
                 return true;
             } else {
                 try {
@@ -228,6 +194,7 @@ public class Assignment2 {
                 } catch (Exception e) {
                     return false;
                 }
+                
                 return false;
             }
         } catch (SQLException e) {
@@ -267,18 +234,19 @@ public class Assignment2 {
           } catch (Exception e2) {
               return false;
           }
+          
           return false;
       }
     }
 
     public String listPlayerRanking() {
         try {
-            ps = connection.prepareStatement("SELECT pname, globalrank FROM A2.player ORDER BY globalrank ASC;");
+            final String statement = "SELECT pname, globalrank FROM A2.player ORDER BY globalrank ASC;";
+            ps = connection.prepareStatement(statement);
 
             rs = ps.executeQuery();
 
             String rankings = "";
-
             while (rs.next()) {
                 int rank = rs.getInt("globalrank");
                 String name = rs.getString("pname");
@@ -302,10 +270,10 @@ public class Assignment2 {
   
     public int findTriCircle(){
       try {
-        final String statement = "SELECT COUNT(*) FROM (SELECT DISTINCT e1.winid, e2.winid," +
-            " e3.winid FROM A2.event e1, A2.event e2, A2.event e3 WHERE e1.winid < e2.winid" + 
-            " AND e2.winid < e3.winid AND e1.winid = e3.lossid AND e2.winid = e1.lossid" + 
-            " AND e3.winid = e2.lossid) scope;";
+        final String statement = "SELECT COUNT(*) FROM (SELECT DISTINCT event1.winid, event2.winid," +
+            " event3.winid FROM A2.event event1, A2.event event2, A2.event event3 WHERE event1.winid < event2.winid" + 
+            " AND event2.winid < event3.winid AND event1.winid = event3.lossid AND event2.winid = event1.lossid" + 
+            " AND event3.winid = event2.lossid) scope;";
         
         ps = connection.prepareStatement(statement);
         rs = ps.executeQuery();
@@ -334,20 +302,20 @@ public class Assignment2 {
             ps.close();
 
             ps = connection.prepareStatement("INSERT INTO A2.championPlayers "
-                    + "(SELECT play.pid play.pname count(champ.tid) as nchampions "
-                    + "FROM A2.player play JOIN A2.champion champ on play.pid = champ.pid "
+                    + "(SELECT play.pid, play.pname, COUNT(champ.tid) as nchampions "
+                    + "FROM A2.player play JOIN A2.champion champ ON play.pid = champ.pid "
                     + "GROUP BY play.pid);");
+            
             ps.executeUpdate();
             ps.close();
             return true;
         } catch (SQLException e) {
-            e.printStackTrace();
             try {
                 ps.close();
             } catch (SQLException e1) {
-                e1.printStackTrace();
                 return false;
             }
+            e.printStackTrace();
             return false;
         }    
     }  
