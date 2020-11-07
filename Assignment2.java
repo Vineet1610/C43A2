@@ -333,8 +333,7 @@ public class Assignment2 {
             ps.execute();
             ps.close();
 
-            ps = connection.prepareStatement("INSERT INTO A2.championPlayers "
-                    + "(SELECT play.pid play.pname count(champ.tid) as nchampions "
+            ps = connection.prepareStatement("INSERT INTO A2.championPlayers (SELECT play.pid play.pname COUNT(champ.tid) as nchampions "
                     + "FROM A2.player play JOIN A2.champion champ on play.pid = champ.pid "
                     + "GROUP BY play.pid);");
             ps.executeUpdate();
