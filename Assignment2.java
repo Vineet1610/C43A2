@@ -337,7 +337,7 @@ public class Assignment2 {
                     + "(SELECT play.pid play.pname count(champ.tid) as nchampions "
                     + "FROM A2.player play JOIN A2.champion champ on play.pid = champ.pid "
                     + "GROUP BY play.pid);");
-            ps.execute();
+            ps.executeUpdate();
             ps.close();
             return true;
         } catch (SQLException e) {
