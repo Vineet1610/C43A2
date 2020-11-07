@@ -164,41 +164,29 @@ order by cname desc
 );
 
 --Views (Query 10)
-CREATE VIEW winsandloss2014 AS
-(select winner as pname, 
-	wins.courtname as court, 
-	wins.year as year, wins, losses
-from(select pname as winner, courtname, year, count(*) as wins
-	from event join player on winid = pid
-	join court on court.courtid = event.courtid
-	where year = 2014 group by pname, courtname, year) wins
-left join(select pname as loser, courtname, year, count(*) as losses
-	from event join player on lossid = pid
-	join court on court.courtid = event.courtid
-	where year = 2014 group by pname, courtname, year) losses
-on losses.loser = wins.winner and losses.courtname = wins.courtname);
-
-CREATE VIEW minimum200minutes AS
-(select pname, avg(duration)
-from(select pname, duration
-	from event join player on lossid = pid
-	UNION ALL 
-    select pname, duration
-	from event join player on winid = pid) timeStats
-group by pname
-having avg(duration) > 200);
+CREATE VIEW durations as 
+(select pid, duration from (select pid from (select * from 
+    (select * from record where year = 2014) 
+    where wins > losses)) cross join event 
+ where pid = winid or pid = lossid);
+ 
+CREATE VIEW greaterThan200Duration as 
+(select pid from 
+    (select pid, avg(duration) as avgDuration 
+    from (durations group by pid)) 
+ where avgDuration > 200);
+    
+CREATE VIEW playerNames AS 
+(select pname 
+    from (select pid 
+          from ((select pid from playerSubset) 
+                intersect (select pid from greaterThan200Duration))) 
+ natural join player);
 
 --Query 10
-INSERT INTO query10
-(select distinct pname
-from winsandloss2014
-where pname not in 
-	(select pname from winsandloss2014 where losses >= wins)
-and pname in 
-	(select pname from minimum200minutes)
-order by pname desc);
+INSERT INTO query10(select pname from playerNames order by pname desc);
 
---Drop views (Query 10)
-DROP VIEW winsandloss2014;
-DROP VIEW minimum200minutes;
-
+--Drop Views
+DROP VIEW durations;
+DROP VIEW greaterThan200Duration;
+DROP VIEW playerNames;
