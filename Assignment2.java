@@ -12,6 +12,27 @@ public class Assignment2 {
     System.out.printf("%b\t%s\n", !a2.insertPlayer(8, "Vineet Desai", 9, 3), "Insert with duplicate playerID");
     System.out.printf("%b\t%s\n", !a2.insertPlayer(9, "Vineet Desai", 9, 10), "Insert with invalid invalid countryID");
     
+    System.out.printf("%b\t%s\n", a2.getChampions(1) == 6, "Champion status valid player");
+    System.out.printf("%b\t%s\n", a2.getChampions(100) == 0, "Champion status invalid player");
+
+    System.out.printf("%b\t%s\n", a2.getCourtInfo(10).equals("10:Court10:500:Big Tournament"), "Court status valid court");
+    System.out.printf("%b\t%s\n", a2.getCourtInfo(100).equals(""), "Court status invalid court");
+
+    System.out.printf("%b\t%s\n", a2.chgRecord(1, 2011, 25, 25), "Change record valid player");
+    System.out.printf("%b\t%s\n", !a2.chgRecord(100, 2011, 25, 25), "Change record invalid player");
+    System.out.printf("%b\t%s\n", !a2.chgRecord(1, 2015, 25, 25), "Change record invalid year");
+
+    System.out.printf("%b\t%s\n", a2.deleteMatcBetween(1, 5), "Delete matches valid user");
+    System.out.printf("%b\t%s\n", a2.deleteMatcBetween(6, 1), "Delete matches valid user reverse");
+    System.out.printf("%b\t%s\n", !a2.deleteMatcBetween(1, 6), "Delete matches invalid users");
+
+    int circles = a2.findTriCircle();
+    System.out.printf("%b\t%s\n", circles == 2, circles + " = 2 circles (1, 2, 3) & (2, 3, 4)");
+
+    System.out.printf("%b\t%s\n", a2.updateDB(), "Update database");
+
+    System.out.println("== Player Rankings:\n" + a2.listPlayerRanking());
+    
     System.out.printf("%b\t%s\n", a2.disconnectDB(), "Closing ...");
     System.out.printf("%b\t%s\n", a2.connection, "Connection closed!");
   }
@@ -45,12 +66,6 @@ public class Assignment2 {
     // session. Returns true if connection is sucessful
     public boolean connectDB(String URL, String username, String password) {
         try {
-            if (connection != null && !connection.isClosed()) {
-                if (!disconnectDB()) {
-                    return false;
-                }
-            }
-
             connection = DriverManager.getConnection(URL, username, password);
             return true;
         } catch (Exception e) {
@@ -76,7 +91,9 @@ public class Assignment2 {
 
     public boolean insertPlayer(int pid, String pname, int globalRank, int cid) {
       try {
-        ps = connection.prepareStatement("INSERT INTO A2.player VALUES (?, ?, ?, ?);");
+        final String statement = "INSERT INTO A2.player VALUES (?, ?, ?, ?);";
+        
+        ps = connection.prepareStatement(statement);
 
         ps.setInt(1, pid);
         ps.setString(2, pname);
@@ -141,8 +158,10 @@ public class Assignment2 {
     }
 
     public String getCourtInfo(int courtid) {
-        try {
-        ps = connection.prepareStatement("SELECT * FROM A2.court WHERE courtid=?;");
+      try {
+        final String statment = "SELECT * FROM A2.court WHERE courtid=?;";
+        
+        ps = connection.prepareStatement(statment);
 
         ps.setInt(1, courtid);
         rs = ps.executeQuery();
@@ -224,7 +243,10 @@ public class Assignment2 {
 
     public boolean deleteMatcBetween(int p1id, int p2id){
       try {
-        ps = connection.prepareStatement("DELETE FROM A2.event WHERE (winid=? AND lossid=?) OR (winid=? AND lossid=?);");
+        final String statment = "DELETE FROM A2.event WHERE (winid=? AND lossid=?)" + 
+            " OR (winid=? AND lossid=?);";
+        
+        ps = connection.prepareStatement(statment);
 
         ps.setInt(1, p1id);
         ps.setInt(2, p2id);
@@ -279,28 +301,25 @@ public class Assignment2 {
     }
   
     public int findTriCircle(){
-        try {
-            ps = connection.prepareStatement("SELECT COUNT(*) FROM (SELECT DISTINCT e1.winid, e2.winid, e3.winid "
-                    + "FROM A2.event e1, A2.event e2, A2.event e3 WHERE e1.winid < e2.winid AND e2.winid < e3.winid "
-                    + "AND e1.winid = e3.lossid AND e3.winid = e2.lossid AND e2.winid = e1.lossid) scope;");
-            rs = ps.executeQuery();
-
-            try {
-                ps.close();
-                rs.close();
-            } catch (Exception e) {
-                return 0;
-            }
-            return rs.next() ? rs.getInt(1) : 0;
-        } catch (Exception e) {
-            try {
-                ps.close();
-                rs.close();
-            } catch (Exception e2) {
-                return 0;
-            }
-            return 0;
-        }
+      try {
+        final String statement = "SELECT COUNT(*) FROM (SELECT DISTINCT e1.winid, e2.winid," +
+            " e3.winid FROM A2.event e1, A2.event e2, A2.event e3 WHERE e1.winid < e2.winid" + 
+            " AND e2.winid < e3.winid AND e1.winid = e3.lossid AND e2.winid = e1.lossid" + 
+            " AND e3.winid = e2.lossid) scope;";
+        
+        ps = connection.prepareStatement(statement);
+        rs = ps.executeQuery();
+        return rs.next() ? rs.getInt(1) : 0;
+      } catch (Exception e) {
+          return 0;
+      } finally {
+          try {
+              ps.close();
+              rs.close();
+          } catch (Exception e) {
+              return 0;
+          }
+      }
     }
 
     public boolean updateDB() {
