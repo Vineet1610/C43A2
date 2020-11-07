@@ -251,33 +251,20 @@ public class Assignment2 {
 
     public String listPlayerRanking() {
         try {
-            ps = connection.prepareStatement("SELECT pname, globalrank FROM A2.player ORDER BY globalrank [ASC];");
+            ps = connection.prepareStatement("SELECT pname, globalrank FROM A2.player ORDER BY globalrank ASC;");
 
             rs = ps.executeQuery();
 
-            if (rs.next()) {
-                int rank = rs.getInt(2);
-                String name = rs.getString(1);
+            String rankings = "";
 
-                String rankings = String.format("%s:%d\n", name, rank);
-                try {
-                    ps.close();
-                    rs.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return "";
-                }
-                return rankings;
-            } else {
-                try {
-                    ps.close();
-                    rs.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return "";
-                }
-                return "";
+            while (rs.next()) {
+                int rank = rs.getInt("globalrank");
+                String name = rs.getString("pname");
+
+                rankings = rankings + String.format("%s:%d", name, rank) + "\n";
             }
+
+            return rankings;
         } catch (SQLException e) {
             try {
                 ps.close();
@@ -318,19 +305,19 @@ public class Assignment2 {
 
     public boolean updateDB() {
         try {
-            ps = connection.prepareStatement("DROP TABLE IF EXISTS championPlayers CASCADE;");
+            ps = connection.prepareStatement("DROP TABLE IF EXISTS A2.championPlayers CASCADE;");
             ps.execute();
             ps.close();
 
             ps = connection.prepareStatement(
-                    "CREATE TABLE championPlayers(" + "pid INTEGER, pname VARCHAR, nchampions INTEGER);");
+                    "CREATE TABLE championPlayers (pid INTEGER, pname VARCHAR NOT NULL, nchampions INTEGER);");
             ps.execute();
             ps.close();
 
             ps = connection.prepareStatement("INSERT INTO A2.championPlayers "
-                    + "(SELECT player.pid player.pname count(champion.tid) as nchampions "
-                    + "FROM A2.player player JOIN A2.champion champion on player.pid = champion.pid "
-                    + "GROUP BY player.pid);");
+                    + "(SELECT play.pid play.pname count(champ.tid) as nchampions "
+                    + "FROM A2.player play JOIN A2.champion champ on play.pid = champ.pid "
+                    + "GROUP BY play.pid);");
             ps.execute();
             ps.close();
             return true;
